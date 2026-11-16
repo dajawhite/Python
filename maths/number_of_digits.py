@@ -39,6 +39,10 @@ def num_digits_fast(n: int) -> int:
     Find the number of digits in a number.
     abs() is used as logarithm for negative numbers is not defined.
 
+    math.log10() returns a float, which can round across a power of ten
+    for large inputs (math.log10(10**16 - 1) == 16.0), so the estimate is
+    checked against exact integer powers of ten and corrected if needed.
+
     >>> num_digits_fast(12345)
     5
     >>> num_digits_fast(123)
@@ -47,6 +51,14 @@ def num_digits_fast(n: int) -> int:
     4
     >>> num_digits_fast(10**15)
     16
+    >>> num_digits_fast(10**16 - 1)
+    16
+    >>> num_digits_fast(-(10**16 - 1))
+    16
+    >>> all(num_digits_fast(10**k - 1) == k for k in range(1, 400))
+    True
+    >>> all(num_digits_fast(10**k) == k + 1 for k in range(400))
+    True
     >>> num_digits_fast(0)
     1
     >>> num_digits_fast(-1)
@@ -60,7 +72,16 @@ def num_digits_fast(n: int) -> int:
     """
     if not isinstance(n, int):
         raise TypeError("Input must be an integer")
-    return 1 if n == 0 else math.floor(math.log10(abs(n)) + 1)
+    n = abs(n)
+    if n == 0:
+        return 1
+    digits = math.floor(math.log10(n)) + 1
+    # The float estimate can be off by one next to a power of ten
+    if n < 10 ** (digits - 1):
+        digits -= 1
+    elif n >= 10**digits:
+        digits += 1
+    return digits
 
 
 def num_digits_faster(n: int) -> int:
